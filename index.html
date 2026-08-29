@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Grocery Tracker Canada</title>
+  <meta name="description" content="Track grocery prices store by store across Canada, with Quebec tax totals, price-change alerts, and repurchase reminders." />
+  <meta name="theme-color" content="#0f3d2e" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">🍁</span>
+      <span class="brand-name">Grocery Tracker <span class="brand-sub">Canada</span></span>
+    </div>
+    <button id="reminder-bell" class="icon-btn" type="button" aria-label="Reminders due" title="Reminders due">
+      🔔<span id="reminder-count" class="badge" hidden>0</span>
+    </button>
+  </header>
+
+  <main id="app">
+    <!-- Dashboard -->
+    <section id="view-dashboard" class="view" data-view="dashboard">
+      <div class="view-header">
+        <h1>Dashboard</h1>
+        <button id="locate-btn" class="btn btn-primary" type="button">📍 Find my store</button>
+      </div>
+      <p id="locate-status" class="hint"></p>
+
+      <div id="nearby-store-card" class="card" hidden>
+        <h2 id="nearby-store-name"></h2>
+        <p id="nearby-store-distance" class="hint"></p>
+        <div id="nearby-store-list" class="item-list"></div>
+      </div>
+
+      <h2 class="section-title">Reminders due</h2>
+      <div id="reminders-list" class="item-list">
+        <p class="empty-state">No reminders due. Set a repurchase interval on an item to get one.</p>
+      </div>
+
+      <h2 class="section-title">Full shopping list</h2>
+      <div id="shopping-list" class="item-list">
+        <p class="empty-state">Nothing marked "to buy" yet. Add items in a store and check "to buy".</p>
+      </div>
+    </section>
+
+    <!-- Stores -->
+    <section id="view-stores" class="view" data-view="stores" hidden>
+      <div class="view-header">
+        <h1>Stores</h1>
+        <button id="add-store-btn" class="btn btn-primary" type="button">+ Add store</button>
+      </div>
+      <div id="stores-list" class="item-list"></div>
+    </section>
+
+    <!-- Single store detail (products) -->
+    <section id="view-store-detail" class="view" data-view="store-detail" hidden>
+      <div class="view-header">
+        <button class="btn btn-ghost back-btn" data-back="stores" type="button">← Stores</button>
+      </div>
+      <h1 id="store-detail-name"></h1>
+      <p id="store-detail-address" class="hint"></p>
+      <button id="store-set-location-btn" class="btn btn-secondary" type="button">📍 Save my current location as this store</button>
+
+      <div class="view-header">
+        <h2 class="section-title">Products</h2>
+        <button id="add-item-btn" class="btn btn-primary" type="button">+ Add product</button>
+      </div>
+      <div id="store-items-list" class="item-list"></div>
+    </section>
+
+    <!-- Item detail (price history) -->
+    <section id="view-item-detail" class="view" data-view="item-detail" hidden>
+      <div class="view-header">
+        <button class="btn btn-ghost back-btn" data-back="store-detail" type="button">← Back</button>
+      </div>
+      <h1 id="item-detail-name"></h1>
+      <p id="item-detail-brand" class="hint"></p>
+
+      <form id="log-price-form" class="card form-grid">
+        <h2 class="section-title">Log a price</h2>
+        <label>Date <input type="date" name="date" required /></label>
+        <label>Price paid (CAD) <input type="number" name="price" min="0" step="0.01" required /></label>
+        <label>Quantity <input type="number" name="quantity" min="0" step="0.01" value="1" required /></label>
+        <label class="full">Notes <input type="text" name="notes" placeholder="size, sale, substitution..." /></label>
+        <button class="btn btn-primary full" type="submit">Save price</button>
+      </form>
+
+      <div id="price-change-banner" class="banner" hidden></div>
+
+      <h2 class="section-title">Price history</h2>
+      <div id="price-history-list" class="item-list"></div>
+
+      <h2 class="section-title">Repurchase reminder</h2>
+      <div class="card form-grid">
+        <label>Remind me every N days <input type="number" id="reminder-days-input" min="0" step="1" placeholder="e.g. 14" /></label>
+        <button id="save-reminder-btn" class="btn btn-secondary full" type="button">Save reminder</button>
+        <label class="full checkbox-row"><input type="checkbox" id="item-toBuy-input" /> On shopping list right now</label>
+        <label class="full checkbox-row"><input type="checkbox" id="item-taxable-input" /> Taxable (not a zero-rated basic grocery)</label>
+      </div>
+    </section>
+
+    <!-- Cart & Tax -->
+    <section id="view-cart" class="view" data-view="cart" hidden>
+      <h1>Cart &amp; Quebec tax</h1>
+      <p class="hint">Pick a store, tick what's going in the cart, adjust quantities/prices, and get your TPS/TVQ total before you're at the register.</p>
+      <label class="full">Store
+        <select id="cart-store-select"></select>
+      </label>
+      <div id="cart-items-list" class="item-list"></div>
+      <div class="card" id="cart-totals">
+        <div class="totals-row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
+        <div class="totals-row"><span>TPS (GST 5%)</span><span id="cart-tps">$0.00</span></div>
+        <div class="totals-row"><span>TVQ (QST 9.975%)</span><span id="cart-tvq">$0.00</span></div>
+        <div class="totals-row totals-total"><span>Total</span><span id="cart-total">$0.00</span></div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="view" data-view="settings" hidden>
+      <h1>Settings</h1>
+      <div class="card">
+        <h2 class="section-title">Data</h2>
+        <p class="hint">Everything is stored locally on this device (localStorage). Export a backup or move it to another device.</p>
+        <button id="export-btn" class="btn btn-secondary" type="button">Export backup (.json)</button>
+        <label class="btn btn-secondary file-btn">
+          Import backup
+          <input id="import-input" type="file" accept="application/json" hidden />
+        </label>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Main navigation">
+    <button class="tab-btn active" data-view="dashboard" type="button"><span class="tab-icon">🏠</span>Dashboard</button>
+    <button class="tab-btn" data-view="stores" type="button"><span class="tab-icon">🏬</span>Stores</button>
+    <button class="tab-btn" data-view="cart" type="button"><span class="tab-icon">🧾</span>Cart</button>
+    <button class="tab-btn" data-view="settings" type="button"><span class="tab-icon">⚙️</span>Settings</button>
+  </nav>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Add/Edit Store dialog -->
+  <dialog id="store-dialog">
+    <form id="store-form" class="form-grid">
+      <h2 id="store-dialog-title">Add store</h2>
+      <label class="full">Name <input type="text" name="name" required /></label>
+      <label class="full">Address (optional) <input type="text" name="address" /></label>
+      <label class="full">Notes <input type="text" name="notes" /></label>
+      <div class="dialog-actions full">
+        <button type="button" class="btn btn-ghost" data-close-dialog>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Add Item dialog -->
+  <dialog id="item-dialog">
+    <form id="item-form" class="form-grid">
+      <h2>Add product</h2>
+      <label class="full">Product name <input type="text" name="name" required /></label>
+      <label class="full">Brand <input type="text" name="brand" /></label>
+      <label class="full">Unit / size <input type="text" name="unit" placeholder="e.g. 1 L, 12-pack, 900 g" /></label>
+      <label class="full">Notes <input type="text" name="notes" /></label>
+      <label class="full checkbox-row"><input type="checkbox" name="taxable" /> Taxable (not a zero-rated basic grocery)</label>
+      <div class="dialog-actions full">
+        <button type="button" class="btn btn-ghost" data-close-dialog>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
