@@ -1,0 +1,35 @@
+{
+  "name": "grocery-price-tracker-canada",
+  "version": "1.0.0",
+  "description": "A static, no-build web app for tracking grocery purchases store by store (Costco, Walmart, IGA, or any other store you add), across Canada.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digichikmon/grocery-price-tracker-canada.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/digichikmon/grocery-price-tracker-canada/issues"
+  },
+  "homepage": "https://github.com/digichikmon/grocery-price-tracker-canada#readme",
+  "dependencies": {
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/geolocation": "^8.2.2",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
+  }
+}

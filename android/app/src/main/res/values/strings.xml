@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Grocery Tracker Canada</string>
+    <string name="title_activity_main">Grocery Tracker Canada</string>
+    <string name="package_name">ca.domdesign.grocerytracker</string>
+    <string name="custom_url_scheme">ca.domdesign.grocerytracker</string>
+</resources>

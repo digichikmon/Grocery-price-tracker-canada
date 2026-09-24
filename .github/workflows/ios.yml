@@ -1,0 +1,39 @@
+name: iOS build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # macOS runners ship Xcode, which this project needs and this
+    # repo's own sandbox cannot provide.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install web/Capacitor dependencies
+        run: npm ci
+
+      - name: Sync Capacitor native project
+        run: npx cap sync ios
+
+      # Unsigned simulator build — proves the project compiles on every
+      # push without needing an Apple Developer account or signing certs.
+      # Once you have a paid Apple Developer account, replace this step
+      # with `xcodebuild archive` + `exportArchive` using a signing
+      # certificate and provisioning profile stored as repo secrets, then
+      # upload the resulting .ipa with altool/notarytool or Transporter.
+      - name: Build for iOS Simulator (unsigned)
+        working-directory: ios/App
+        run: |
+          xcodebuild -project App.xcodeproj -scheme App \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build

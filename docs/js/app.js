@@ -1,6 +1,7 @@
 import { DB } from "./db.js";
 import { computeCartTotals, formatCAD } from "./tax.js";
 import { getCurrentPosition, nearestStores, distanceKm } from "./geo.js";
+import { scheduleReminderNotification } from "./notifications.js";
 
 // ---------------------------------------------------------------- routing --
 const state = { view: "dashboard", storeId: null, itemId: null };
@@ -337,6 +338,7 @@ document.getElementById("log-price-form").addEventListener("submit", (e) => {
   form.date.value = new Date().toISOString().slice(0, 10);
   showToast("Price logged");
   renderItemDetail(false);
+  syncReminderNotification(state.itemId);
 });
 
 document.getElementById("save-reminder-btn").addEventListener("click", () => {
@@ -344,7 +346,17 @@ document.getElementById("save-reminder-btn").addEventListener("click", () => {
   DB.updateItem(state.itemId, { reminderDays: days ? Number(days) : null });
   showToast("Reminder saved");
   render();
+  syncReminderNotification(state.itemId);
 });
+
+// Keep the native OS reminder notification (if running as a native app) in
+// sync with the item's reminder interval and latest purchase date.
+function syncReminderNotification(itemId) {
+  const item = DB.getItem(itemId);
+  if (!item) return;
+  const status = DB.getReminderStatus(itemId);
+  scheduleReminderNotification(item, status.hasReminder ? status.dueDate : null).catch(() => {});
+}
 
 document.getElementById("item-toBuy-input").addEventListener("change", (e) => {
   DB.toggleToBuy(state.itemId, e.target.checked);
@@ -480,3 +492,10 @@ function escapeHtml(str) {
 
 // ---------------------------------------------------------------- init ----
 showView("dashboard");
+
+if (window.Capacitor?.isNativePlatform?.()) {
+  const { StatusBar, SplashScreen } = window.Capacitor.Plugins;
+  StatusBar?.setBackgroundColor({ color: "#0f3d2e" }).catch(() => {});
+  StatusBar?.setStyle({ style: "DARK" }).catch(() => {});
+  SplashScreen?.hide().catch(() => {});
+}
